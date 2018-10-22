@@ -96,7 +96,7 @@ const getIgnore = opts => {
 
 const getDirectoriesSync = cwd => {
 	const files = fs.readdirSync(cwd);
-	const dirs = files.filter(file => {
+	const dirs = files.map(file => {
 		const filePath = path.join(cwd, file);
 		const stat = fs.lstatSync(filePath);
 		return stat.isDirectory() ? file + '/' : null;
