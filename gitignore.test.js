@@ -83,3 +83,19 @@ test('multiple negation - sync', t => {
 	const expected = ['!!unicorn.js', '!unicorn.js'];
 	t.deepEqual(actual, expected);
 });
+
+test('no gitignore', async t => {
+	const cwd = path.join(__dirname, 'fixtures/no-gitignore');
+	const isIgnored = await gitignore({cwd});
+	const actual = ['foo.js', 'bar.js'].filter(file => !isIgnored(file));
+	const expected = ['foo.js', 'bar.js'];
+	t.deepEqual(actual, expected);
+});
+
+test('no gitignore - sync', t => {
+	const cwd = path.join(__dirname, 'fixtures/no-gitignore');
+	const isIgnored = gitignore.sync({cwd});
+	const actual = ['foo.js', 'bar.js'].filter(file => !isIgnored(file));
+	const expected = ['foo.js', 'bar.js'];
+	t.deepEqual(actual, expected);
+});
