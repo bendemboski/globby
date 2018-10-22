@@ -16,6 +16,7 @@ const DEFAULT_IGNORE = [
 
 const readFileP = pify(fs.readFile);
 const readdirP = pify(fs.readdir);
+const lstatP = pify(fs.lstat);
 
 const mapGitIgnorePatternTo = base => ignore => {
 	if (ignore.startsWith('!')) {
@@ -70,6 +71,16 @@ const getFileSync = (file, cwd) => {
 	};
 };
 
+const getDirectories = cwd => {
+	return readdirP(cwd)
+		.then(files => Promise.all(files.map(file => {
+			const filePath = path.join(cwd, file);
+			return lstatP(filePath)
+				.then(stat => stat.isDirectory() ? file + '/' : null);
+		})))
+		.then(dirs => dirs.filter(Boolean));
+};
+
 const getIgnoreFilter = cwd => {
 	return getFile('.gitignore', cwd)
 		.catch(() => undefined)
@@ -78,9 +89,19 @@ const getIgnoreFilter = cwd => {
 };
 
 const getIgnore = opts => {
-	return Promise.all([readdirP(opts.cwd), getIgnoreFilter(opts.cwd)])
+	return Promise.all([getDirectories(opts.cwd), getIgnoreFilter(opts.cwd)])
 		.then(([files, filter]) => files.filter(filter))
 		.then(ignore => ignore.concat(opts.ignore));
+};
+
+const getDirectoriesSync = cwd => {
+	const files = fs.readdirSync(cwd);
+	const dirs = files.filter(file => {
+		const filePath = path.join(cwd, file);
+		const stat = fs.lstatSync(filePath);
+		return stat.isDirectory() ? file + '/' : null;
+	});
+	return dirs.filter(Boolean);
 };
 
 const getIgnoreFilterSync = cwd => {
@@ -94,7 +115,7 @@ const getIgnoreFilterSync = cwd => {
 };
 
 const getIgnoreSync = opts => {
-	const files = fs.readdirSync(opts.cwd);
+	const files = getDirectoriesSync(opts.cwd);
 	const filter = getIgnoreFilterSync(opts.cwd);
 	const gitIgnore = files.filter(filter);
 	return gitIgnore.concat(opts.ignore);
